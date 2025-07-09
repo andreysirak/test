@@ -3,6 +3,9 @@ name: Assign On-Call to Issue
 on:
   issues:
     types: [opened]
+    
+permissions:
+  issues: write
 
 jobs:
   assign-oncall:
