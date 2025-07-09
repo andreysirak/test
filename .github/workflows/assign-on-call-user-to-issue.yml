@@ -1,0 +1,55 @@
+name: Assign On-Call to Issue
+
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  assign-oncall:
+    runs-on: ubuntu-latest
+    env:
+      OPSGENIE_API_KEY: ${{ secrets.OPSGENIE_API_KEY }}
+      GH_TOKEN: ${{ github.token }}
+      ISSUE_NUMBER: ${{ github.event.issue.number }}
+      REPO: ${{ github.repository }}
+      SCHEDULE_ID: 'bd9004e7-7f31-4150-b3a7-14792ecc99eb'
+
+    steps:
+      - name: Get the on-call user
+        id: get-oncall
+        run: |
+          RESPONSE=$(curl -s -H "Authorization: GenieKey $OPSGENIE_API_KEY" \
+            "https://api.opsgenie.com/v2/schedules/$SCHEDULE_ID/on-calls")
+          echo "Raw response: $RESPONSE"
+          ONCALL_NAME=$(echo "$RESPONSE" | jq -r '.data.onCallParticipants[0].name')
+          echo "ONCALL_NAME=$ONCALL_NAME" >> $GITHUB_OUTPUT
+
+      - name: Map Opsgenie name to GitHub username
+        id: map-user
+        run: |
+          ONCALL_NAME="${{ steps.get-oncall.outputs.ONCALL_NAME }}"
+          
+          declare -A MAP
+          MAP["andrii.sirak@unacast.com"]="andreysirak"
+          MAP["ole.christian.langfjaran@unacast.com"]="judoole"
+          MAP["patrick.zecchin@unacast.com"]="patrick-zecchin-uc"
+          MAP["eloisa.arena@unacast.com"]="eloisa-arena"
+          MAP["dogan.can.demirbilek@unacast.com"]="demirbilek95"
+          MAP["kobina.quansah@unacast.com"]="kobinaquansah"
+          MAP["matthew.fleming@unacast.com"]="mfleming10"
+          
+          GH_USER="${MAP[$ONCALL_NAME]}"
+          if [ -z "$GH_USER" ]; then
+            echo "No GitHub user mapped for Opsgenie user: $ONCALL_NAME"
+            exit 1
+          fi
+
+          echo "GH_USER=$GH_USER" >> $GITHUB_OUTPUT
+
+      - name: Assign issue to GitHub user
+        run: |
+          gh api \
+            -X POST \
+            -H "Accept: application/vnd.github+json" \
+            "/repos/$REPO/issues/$ISSUE_NUMBER/assignees" \
+            -f assignees[]="${{ steps.map-user.outputs.GH_USER }}"
