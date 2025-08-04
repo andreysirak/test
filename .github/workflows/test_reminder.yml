@@ -19,7 +19,7 @@ jobs:
         steps:
           - name: Get all open issues
             run: |
-              gh issue list --state open --json number,createdAt > issues.json
+              gh issue list --repo "$REPO" --state open --json number,createdAt > issues.json
 
           - name: Post reminder comments
             run: |
