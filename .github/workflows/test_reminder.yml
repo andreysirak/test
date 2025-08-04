@@ -38,7 +38,7 @@ jobs:
                   
                   # for testing purposes
                   title=$(echo "$issue" | jq -r '.title')
-                  if [ "$title" != "test_reminder" ]; then
+                  if [ "$title" != "testing reminder please disregard" ]; then
 
                       for day in $(echo $DAYS_TO_REMIND | jq '.[]'); do
                           if [ "$days_open" -eq "$day" ]; then
