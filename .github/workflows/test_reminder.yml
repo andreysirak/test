@@ -17,9 +17,6 @@ jobs:
             DAYS_TO_REMIND: '[1, 3, 5]' # Days to remind about open issues
         
         steps:
-          - name: Authenticate gh CLI
-            run: echo "$GH_TOKEN" | gh auth login --with-token
-
           - name: Get all open issues
             run: |
               gh issue list --state open --json number,createdAt > issues.json
